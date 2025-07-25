@@ -19,6 +19,8 @@ services:
       PGHOST: db
     depends_on:
       - db
+    volumes:
+      - ./backend/images:/app/images  # 👈 Mount the images directory
 
   db:
     image: postgres:16

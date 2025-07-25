@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react';
 import './App.css';
 
+// Updated interface to match backend response
 interface Watch {
   id: number;
   name: string;
-  brand: string;
-  image: string;
-  notes: string;
+  image_url: string;  // Corrected field name
+  brand?: string;     // Optional in case it's not always provided
+  notes?: string;
 }
 
 function App() {
@@ -29,16 +30,20 @@ function App() {
   return (
     <div style={{ textAlign: 'center', padding: '2rem' }}>
       <h1>Watch of the Day</h1>
+
       {watch ? (
         <>
+          {/* Corrected usage of image_url */}
           <img
-            src={`http://localhost:5000${watch.image}`}
+            src={`http://localhost:5000${watch.image_url}`}
             alt={watch.name}
             style={{ width: '300px', borderRadius: '12px' }}
           />
+
           <h2>{watch.name}</h2>
-          <h3>{watch.brand}</h3>
-          <p>{watch.notes}</p>
+          {watch.brand && <h3>{watch.brand}</h3>}
+          {watch.notes && <p>{watch.notes}</p>}
+
           <button onClick={fetchWatch} style={{ marginTop: '1rem' }}>
             Show Another
           </button>
