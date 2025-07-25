@@ -102,7 +102,7 @@ function App() {
         <p>Loading...</p>
       )}
 
-      {/* Form: Add by URL */}
+      Form: Add by URL
       <div style={{ marginTop: '3rem' }}>
         <h2>Add a New Watch (via Image URL)</h2>
         <form onSubmit={addWatchWithUrl}>

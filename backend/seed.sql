@@ -1,14 +1,17 @@
 -- backend/seed.sql
+
+DROP TABLE IF EXISTS watches;
+
 CREATE TABLE IF NOT EXISTS watches (
   id SERIAL PRIMARY KEY,
   name TEXT NOT NULL,
   brand TEXT NOT NULL,
-  image TEXT NOT NULL,
+  image_url TEXT NOT NULL,
   notes TEXT
 );
 
-INSERT INTO watches (name, brand, image, notes) VALUES
-('Omega Seamaster', 'Omega', '/images/seamaster.jpg', 'A classic diver\'s watch.'),
+INSERT INTO watches (name, brand, image_url, notes) VALUES
+('Omega Seamaster', 'Omega', '/images/seamaster.jpg', E'A classic diver\'s watch.'),
 ('G-Shock Mudmaster', 'Casio', '/images/mudmaster.jpg', 'Built for rough environments.'),
 ('Seiko 5 Sports', 'Seiko', '/images/seiko.jpg', NULL),
 ('Casio G-Shock', 'Casio', '/images/gshock.jpg', NULL),
@@ -20,7 +23,7 @@ INSERT INTO watches (name, brand, image, notes) VALUES
 ('Omega Aqua Terra Black', 'Omega', '/images/aquaterra_black.webp', NULL),
 ('Omega Speedmaster Moonwatch', 'Omega', '/images/speedmaster_moonwatch.webp', NULL),
 ('Omega Speedmaster White Dial', 'Omega', '/images/speedmaster_white.webp', NULL),
-('Omega Speedmaster \'57 Blue', 'Omega', '/images/speedmaster57blue.webp', NULL),
+('Omega Speedmaster ''57 Blue', 'Omega', '/images/speedmaster57blue.webp', NULL),
 ('Omega Speedmaster First in Space', 'Omega', '/images/speedmaster_firstinspace.webp', NULL),
 ('Swatch Moonswatch', 'Swatch', '/images/moonswatch.webp', NULL),
 ('Christopher Ward C60 300 Pro', 'Christopher Ward', '/images/c60300pro.webp', NULL),
