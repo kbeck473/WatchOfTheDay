@@ -1,17 +1,66 @@
 -- backend/seed.sql
+-- Idempotent seed for WatchOfTheDay
+-- Run safely on every compose up (e.g., via a 'seed' job) without losing data.
 
-DROP TABLE IF EXISTS watches;
-
+-- 1) Ensure table exists (minimal schema)
 CREATE TABLE IF NOT EXISTS watches (
-  id SERIAL PRIMARY KEY,
-  name TEXT NOT NULL,
-  brand TEXT NOT NULL,
-  image_url TEXT NOT NULL,
-  notes TEXT
+  id         SERIAL PRIMARY KEY,
+  name       TEXT NOT NULL,
+  brand      TEXT NOT NULL,
+  image_url  TEXT NOT NULL,
+  notes      TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+-- 2) Add missing columns if your existing table was older/different
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = 'watches' AND column_name = 'image_url'
+  ) THEN
+    ALTER TABLE watches ADD COLUMN image_url TEXT;
+  END IF;
+
+  IF NOT EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = 'watches' AND column_name = 'created_at'
+  ) THEN
+    ALTER TABLE watches ADD COLUMN created_at TIMESTAMPTZ NOT NULL DEFAULT now();
+  END IF;
+END
+$$;
+
+-- 3) If an old 'image_path' column exists, backfill image_url once
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = 'watches' AND column_name = 'image_path'
+  ) THEN
+    UPDATE watches SET image_url = COALESCE(image_url, image_path)
+    WHERE image_url IS NULL;
+  END IF;
+END
+$$;
+
+-- 4) Unique key to prevent duplicates by (name, brand)
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1
+    FROM   pg_constraint
+    WHERE  conname = 'watches_name_brand_key'
+  ) THEN
+    ALTER TABLE watches
+      ADD CONSTRAINT watches_name_brand_key UNIQUE (name, brand);
+  END IF;
+END
+$$;
+
+-- 5) Seed data (ON CONFLICT updates notes/image_url without duplicating rows)
 INSERT INTO watches (name, brand, image_url, notes) VALUES
-('Omega Seamaster', 'Omega', '/images/seamaster.jpg', E'A classic diver\'s watch.'),
+('Omega Seamaster', 'Omega', '/images/seamaster.jpg', 'A classic diver''s watch.'),
 ('G-Shock Mudmaster', 'Casio', '/images/mudmaster.jpg', 'Built for rough environments.'),
 ('Seiko 5 Sports', 'Seiko', '/images/seiko.jpg', NULL),
 ('Casio G-Shock', 'Casio', '/images/gshock.jpg', NULL),
@@ -35,4 +84,20 @@ INSERT INTO watches (name, brand, image_url, notes) VALUES
 ('Christopher Ward C63 Black', 'Christopher Ward', '/images/c63_black.webp', NULL),
 ('Grand Seiko GMT Black', 'Grand Seiko', '/images/gs_gmt_black.webp', NULL),
 ('Grand Seiko Blue Snowflake', 'Grand Seiko', '/images/gs_blue_snowflake.webp', NULL),
-('Khaki Field', 'Hamilton', '/images/khaki_field.webp', NULL);
+('Khaki Field', 'Hamilton', '/images/khaki_field.webp', NULL)
+ON CONFLICT (name, brand) DO UPDATE
+SET image_url = EXCLUDED.image_url,
+    notes     = EXCLUDED.notes;
+
+-- 6) Helpful index for brand filters (safe if re-run)
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_class c
+    JOIN pg_namespace n ON n.oid = c.relnamespace
+    WHERE c.relkind = 'i' AND c.relname = 'idx_watches_brand' AND n.nspname = 'public'
+  ) THEN
+    CREATE INDEX idx_watches_brand ON watches (brand);
+  END IF;
+END
+$$;
