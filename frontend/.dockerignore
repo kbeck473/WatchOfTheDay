@@ -1,12 +1,11 @@
-# .dockerignore
 node_modules
 dist
 build
 .next
 .git
 .gitignore
+.vscode
+.env
 Dockerfile
 docker-compose.yml
 README.md
-.vscode
-.env
