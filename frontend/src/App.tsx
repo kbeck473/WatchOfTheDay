@@ -53,7 +53,7 @@ export default function App() {
   return (
     <div style={{ fontFamily: 'system-ui, sans-serif', padding: 24, maxWidth: 900, margin: '0 auto' }}>
       <h1 style={{ marginBottom: 8 }}>Watch of the Day</h1>
-      <p style={{ color: '#666', marginTop: 0 }}>THis will give a watch from your collection.</p>
+      <p style={{ color: '#666', marginTop: 0 }}>This will give a watch from your collection.</p>
 
       <div style={{ display: 'grid', gap: 24, marginTop: 16 }}>
         {/* WOTD Card */}
