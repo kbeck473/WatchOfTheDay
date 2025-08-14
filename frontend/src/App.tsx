@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import WatchOfTheDay from './components/WatchOfTheDay';
 import WatchUploadForm from './components/WatchUploadForm';
 import WatchList from './components/WatchList';
+import TimeBar from './components/TimeBar'; 
 
 // TypeScript type for a watch
 export type Watch = {
@@ -50,19 +51,17 @@ export default function App() {
     fetchList();
   }, []);
 
-  return (
+   return (
     <div style={{ fontFamily: 'system-ui, sans-serif', padding: 24, maxWidth: 900, margin: '0 auto' }}>
+
+      
+
       <h1 style={{ marginBottom: 8 }}>Watch of the Day</h1>
-      <p style={{ color: '#666', marginTop: 0 }}>This will give a watch from your collection. TEst for deploy</p>
-
+      <p style={{ color: '#666', marginTop: 0 }}>This will give a watch from your collection.</p>
+      <TimeBar />
       <div style={{ display: 'grid', gap: 24, marginTop: 16 }}>
-        {/* WOTD Card */}
         <WatchOfTheDay wotd={wotd} fetchWotd={fetchWotd} loading={loading} err={err} />
-
-        {/* Upload form with callback to refresh lists */}
         <WatchUploadForm afterUpload={() => { fetchWotd(); fetchList(); }} />
-
-        {/* Newest uploads list */}
         <WatchList list={list} refresh={fetchList} />
       </div>
     </div>
