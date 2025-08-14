@@ -37,20 +37,37 @@ services:
       - "5000:5000"
 
   web:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    restart: unless-stopped
-    depends_on:
-      api:
-        condition: service_started
-    ports:
-      - "3000:80"
-    healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost"]
-      interval: 30s
-      timeout: 5s
-      retries: 3
+  build:
+    context: ./frontend
+    dockerfile: Dockerfile
+  # Let Docker inject tini as PID 1 so signals are handled cleanly
+  init: true
+
+  # Ask nginx to quit gracefully (SIGQUIT), and don’t wait forever
+  stop_signal: SIGQUIT
+  stop_grace_period: 10s
+
+  # Avoid auto-restart loops that make “stop” feel impossible
+  restart: "no"
+
+  depends_on:
+    api:
+      condition: service_started
+  ports:
+    - "3000:80"
+
+  # Healthcheck with a hard timeout so it can’t hang
+  healthcheck:
+    test: ["CMD-SHELL", "wget -qO- --timeout=2 http://localhost || exit 1"]
+    interval: 30s
+    timeout: 3s
+    retries: 3
+
+  # Keep nginx’ temp/cache in memory to reduce overlayfs I/O issues
+  tmpfs:
+    - /var/cache/nginx
+    - /var/run
+
 
   seed:
     image: postgres:16-alpine
