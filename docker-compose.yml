@@ -1,5 +1,4 @@
-version: "3.9"
-
+# docker-compose.yml  (remove the `version:` line)
 services:
   db:
     image: postgres:16-alpine
@@ -37,37 +36,35 @@ services:
       - "5000:5000"
 
   web:
-  build:
-    context: ./frontend
-    dockerfile: Dockerfile
-  # Let Docker inject tini as PID 1 so signals are handled cleanly
-  init: true
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
 
-  # Ask nginx to quit gracefully (SIGQUIT), and don’t wait forever
-  stop_signal: SIGQUIT
-  stop_grace_period: 10s
+    # Make stops reliable
+    init: true                 # tini as PID 1 for proper signal handling
+    stop_signal: SIGQUIT       # nginx-friendly graceful quit
+    stop_grace_period: 10s
+    restart: "no"              # avoid auto-restart loops during shutdown
 
-  # Avoid auto-restart loops that make “stop” feel impossible
-  restart: "no"
+    depends_on:
+      api:
+        condition: service_started
+    ports:
+      - "3000:80"
 
-  depends_on:
-    api:
-      condition: service_started
-  ports:
-    - "3000:80"
+    # Healthcheck with hard timeout (busybox wget supports -T)
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- -T 2 http://localhost || exit 1"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
 
-  # Healthcheck with a hard timeout so it can’t hang
-  healthcheck:
-    test: ["CMD-SHELL", "wget -qO- --timeout=2 http://localhost || exit 1"]
-    interval: 30s
-    timeout: 3s
-    retries: 3
-
-  # Keep nginx’ temp/cache in memory to reduce overlayfs I/O issues
-  tmpfs:
-    - /var/cache/nginx
-    - /var/run
-
+    # Use long syntax tmpfs mounts (robust across Compose versions)
+    volumes:
+      - type: tmpfs
+        target: /var/cache/nginx
+      - type: tmpfs
+        target: /var/run
 
   seed:
     image: postgres:16-alpine
